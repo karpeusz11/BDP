@@ -1,3 +1,4 @@
+
 CREATE SCHEMA ksiegowosc;
 
 CREATE TABLE ksiegowosc.pracownicy (
@@ -93,4 +94,46 @@ INSERT INTO ksiegowosc.wynagrodzenie VALUES(101, '2025-09-24', 1, 11, 21, 31),
 	(109, '2025-08-09', 9, 19, 29, NULL),
 	(200, '2025-09-01', 10, 20, 30, 40);
 
---TEST
+--a
+SELECT id_pracownika, nazwisko FROM ksiegowosc.pracownicy;
+
+--b
+SELECT pracownicy.id_pracownika FROM ksiegowosc.pracownicy AS pracownicy
+JOIN ksiegowosc.wynagrodzenie AS wynagrodzenie ON pracownicy.id_pracownika=wynagrodzenie.id_pracownika
+JOIN ksiegowosc.pensja AS pensja ON wynagrodzenie.id_pensji=pensja.id_pensji
+WHERE pensja.kwota > 1000;
+
+--c
+SELECT pracownicy.id_pracownika FROM ksiegowosc.pracownicy AS pracownicy
+JOIN ksiegowosc.wynagrodzenie AS wynagrodzenie ON pracownicy.id_pracownika=wynagrodzenie.id_pracownika
+JOIN ksiegowosc.pensja AS pensja ON wynagrodzenie.id_pensji=pensja.id_pensji
+LEFT JOIN ksiegowosc.premia AS premia ON wynagrodzenie.id_premii=premia.id_premii
+WHERE premia.kwota is null
+GROUP BY pracownicy.id_pracownika, pensja.kwota
+HAVING pensja.kwota > 2000;
+
+--d
+SELECT imie, nazwisko FROM ksiegowosc.pracownicy
+WHERE imie like 'J%';
+
+--e
+SELECT imie, nazwisko FROM ksiegowosc.pracownicy
+WHERE imie like '%a' and nazwisko like '%n%';
+
+--f
+SELECT pracownicy.imie, pracownicy.nazwisko, 160 - godziny.liczba_godzin AS nadgodziny
+FROM ksiegowosc.pracownicy AS pracownicy
+JOIN ksiegowosc.wynagrodzenie AS wynagrodzenie ON pracownicy.id_pracownika=wynagrodzenie.id_pracownika
+JOIN ksiegowosc.godziny AS godziny ON wynagrodzenie.id_godziny=godziny.id_godziny
+WHERE 160 - godziny.liczba_godzin > 0;
+
+--g
+SELECT pracownicy.imie, pracownicy.nazwisko FROM ksiegowosc.pracownicy AS pracownicy
+JOIN ksiegowosc.wynagrodzenie AS wynagrodzenie ON pracownicy.id_pracownika=wynagrodzenie.id_pracownika
+JOIN ksiegowosc.pensja AS pensja ON wynagrodzenie.id_pensji=pensja.id_pensji
+WHERE pensja.kwota > 1000 and pensja.kwota < 3000;
+
+--h
+
+
+
