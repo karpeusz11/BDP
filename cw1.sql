@@ -1,4 +1,3 @@
-
 CREATE SCHEMA ksiegowosc;
 
 CREATE TABLE ksiegowosc.pracownicy (
@@ -54,12 +53,12 @@ INSERT INTO ksiegowosc.pracownicy VALUES(1, 'Jan', 'Kowalski', 'ul. Konwaliowa 8
 	(9, 'Elżbieta', 'Grochowska', 'ul. Długa 4, Rzeszów', 843174253),
 	(10, 'Janusz', 'Kowalski', 'ul. Chabrowa 10, Katowice', 684984456);
 
-INSERT INTO ksiegowosc.godziny VALUES(11, '2025-09-24', 160, 1),
+INSERT INTO ksiegowosc.godziny VALUES(11, '2025-09-24', 162, 1),
 	(12, '2025-09-23', 142, 2),
 	(13, '2025-09-21', 91, 3),
 	(14, '2025-08-12', 40, 4),
 	(15, '2025-08-24', 189, 5),
-	(16, '2025-09-12', 160, 6),
+	(16, '2025-09-12', 165, 6),
 	(17, '2025-07-29', 12, 7),
 	(18, '2025-09-15', 170, 8),
 	(19, '2025-08-09', 150, 9),
@@ -121,11 +120,10 @@ SELECT imie, nazwisko FROM ksiegowosc.pracownicy
 WHERE imie like '%a' and nazwisko like '%n%';
 
 --f
-SELECT pracownicy.imie, pracownicy.nazwisko, 160 - godziny.liczba_godzin AS nadgodziny
-FROM ksiegowosc.pracownicy AS pracownicy
+SELECT pracownicy.imie, pracownicy.nazwisko, godziny.liczba_godzin - 160 AS nadgodziny FROM ksiegowosc.pracownicy AS pracownicy
 JOIN ksiegowosc.wynagrodzenie AS wynagrodzenie ON pracownicy.id_pracownika=wynagrodzenie.id_pracownika
 JOIN ksiegowosc.godziny AS godziny ON wynagrodzenie.id_godziny=godziny.id_godziny
-WHERE 160 - godziny.liczba_godzin > 0;
+WHERE godziny.liczba_godzin - 160 > 0;
 
 --g
 SELECT pracownicy.imie, pracownicy.nazwisko FROM ksiegowosc.pracownicy AS pracownicy
@@ -134,6 +132,57 @@ JOIN ksiegowosc.pensja AS pensja ON wynagrodzenie.id_pensji=pensja.id_pensji
 WHERE pensja.kwota > 1000 and pensja.kwota < 3000;
 
 --h
+SELECT pracownicy.imie, pracownicy.nazwisko AS pracownicy FROM ksiegowosc.pracownicy AS pracownicy
+JOIN ksiegowosc.wynagrodzenie AS wynagrodzenie ON pracownicy.id_pracownika=wynagrodzenie.id_pracownika
+JOIN ksiegowosc.godziny AS godziny ON wynagrodzenie.id_godziny=godziny.id_godziny
+LEFT JOIN ksiegowosc.premia AS premia ON wynagrodzenie.id_premii=premia.id_premii
+WHERE (godziny.liczba_godzin - 160) > 0 and premia.kwota is null;
 
+--i
+SELECT pracownicy.imie, pracownicy.nazwisko AS pracownicy FROM ksiegowosc.pracownicy
+JOIN ksiegowosc.wynagrodzenie AS wynagrodzenie ON pracownicy.id_pracownika=wynagrodzenie.id_pracownika
+JOIN ksiegowosc.pensja AS pensja ON wynagrodzenie.id_pensji=pensja.id_pensji
+ORDER BY pensja.kwota;
+	
+--j
+SELECT pracownicy.imie, pracownicy.nazwisko AS pracownicy FROM ksiegowosc.pracownicy
+JOIN ksiegowosc.wynagrodzenie AS wynagrodzenie ON pracownicy.id_pracownika=wynagrodzenie.id_pracownika
+JOIN ksiegowosc.pensja AS pensja ON wynagrodzenie.id_pensji=pensja.id_pensji
+LEFT JOIN ksiegowosc.premia AS premia ON wynagrodzenie.id_premii=premia.id_premii
+ORDER BY (pensja.kwota + COALESCE(premia.kwota, 0)) DESC;
 
+--k
+SELECT pensja.stanowisko, COUNT(pensja.stanowisko) AS pracownicy FROM ksiegowosc.pracownicy
+JOIN ksiegowosc.wynagrodzenie AS wynagrodzenie ON pracownicy.id_pracownika=wynagrodzenie.id_pracownika
+JOIN ksiegowosc.pensja AS pensja ON wynagrodzenie.id_pensji=pensja.id_pensji
+GROUP BY pensja.stanowisko;
 
+--l
+SELECT ROUND(AVG(pensja.kwota+COALESCE(premia.kwota, 0)), 0) AS średnia, MIN(pensja.kwota+COALESCE(premia.kwota, 0)) AS minimalna, MAX(pensja.kwota+COALESCE(premia.kwota, 0)) AS maksymalna FROM ksiegowosc.pensja
+JOIN ksiegowosc.wynagrodzenie AS wynagrodzenie ON pensja.id_pensji=wynagrodzenie.id_pensji
+LEFT JOIN ksiegowosc.premia AS premia ON wynagrodzenie.id_premii=premia.id_premii
+WHERE pensja.stanowisko like 'kierownik';
+
+--m
+SELECT SUM(pensja.kwota + COALESCE(premia.kwota, 0)) AS suma_wynagrodzen FROM ksiegowosc.pensja
+JOIN ksiegowosc.wynagrodzenie AS wynagrodzenie ON pensja.id_pensji=wynagrodzenie.id_pensji
+LEFT JOIN ksiegowosc.premia AS premia ON wynagrodzenie.id_premii=premia.id_premii;
+
+--f
+SELECT pensja.stanowisko, SUM(pensja.kwota + COALESCE(premia.kwota, 0)) AS suma_wynagrodzen FROM ksiegowosc.pensja
+JOIN ksiegowosc.wynagrodzenie AS wynagrodzenie ON pensja.id_pensji=wynagrodzenie.id_pensji
+LEFT JOIN ksiegowosc.premia AS premia ON wynagrodzenie.id_premii=premia.id_premii
+GROUP BY pensja.stanowisko;
+
+--g
+SELECT pensja.stanowisko, COUNT(premia.id_premii) AS liczba_premii FROM ksiegowosc.pensja
+JOIN ksiegowosc.wynagrodzenie AS wynagrodzenie ON pensja.id_pensji=wynagrodzenie.id_pensji
+LEFT JOIN ksiegowosc.premia AS premia ON wynagrodzenie.id_premii=premia.id_premii
+GROUP BY pensja.stanowisko;
+
+--h
+DELETE FROM ksiegowosc.pracownicy
+WHERE id_pracownika IN (SELECT wynagrodzenie.id_pracownika
+FROM ksiegowosc.wynagrodzenie AS wynagrodzenie
+JOIN ksiegowosc.pensja AS pensja ON wynagrodzenie.id_pensji = pensja.id_pensji
+WHERE pensja.kwota < 1200);
