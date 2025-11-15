@@ -1,5 +1,6 @@
 CREATE EXTENSION postgis;
 
+
 CREATE TABLE obiekty (
     id INT PRIMARY KEY,
     geom geometry,
@@ -10,14 +11,14 @@ CREATE TABLE obiekty (
 --potrzebna jest kolekcja, a nie ST_MultiLine_String
 INSERT INTO obiekty VALUES
     (1, 
-    ST_Collect(ARRAY[		--st_collect przyjmuje tylko 2 obiekty, dlatego lepiej użyć tablicy
+    ST_Union(ARRAY[		--st_union przyjmuje tylko 2 obiekty, dlatego lepiej użyć tablicy, st_collect też działa ale st_union nie tworzy geometrycollection
        	'LINESTRING(0 1, 1 1)',
         'CIRCULARSTRING(1 1, 2 0, 3 1)',	--ST_LineToCurve nie działa -> T_LineToCurve('LINESTRING(1 1, 2 0, 3 1)')
         'CIRCULARSTRING(3 1, 4 2, 5 1)',
         'LINESTRING(5 1, 6 1)'
 	]), 'obiekt1'),
     (2,
-	ST_Collect(ARRAY[
+	ST_Union(ARRAY[
 		'LINESTRING(10 2, 10 6, 14 6)', 
 		'CIRCULARSTRING(14 6, 16 4, 14 2)',
 		'CIRCULARSTRING(14 2, 12 0, 10 2)',
@@ -45,7 +46,6 @@ INSERT INTO obiekty VALUES
 SELECT 
   ST_AsText(ST_GeomFromText('LINESTRING(0 0, 2 2, 4 0)')) as original,
   ST_AsText(ST_LineToCurve(ST_GeomFromText('LINESTRING(0 0, 2 2, 4 0)'))) as curved;
-
 
 --2
 SELECT ST_Area
@@ -84,4 +84,4 @@ SELECT ST_Area(ST_Buffer(geom,5))
 FROM obiekty
 WHERE ST_HasArc(geom) = true;
 
---drop table obiekty
+drop table obiekty
